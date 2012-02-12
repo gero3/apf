@@ -2482,9 +2482,10 @@ apf.$loader = {
         }
     },
     
-    next : function(){
+    next : function(require){
         this.state = 1;
-        
+        var self = this;
+        require = require || window.require;
         var item = this.queue.shift();
         while (item && !item.length) {
             if (item.f)
@@ -2493,9 +2494,23 @@ apf.$loader = {
         }
         
         if (item) {
-            for (var i = 0, l = item.length; i < l; i++) {
-                this.include(item[i], item);
-            }
+            if (apf.hasRequireJS){
+                var sources = ["require"];
+                for(var i =0,l =  item.length; i<l;i++){
+                    sources.push(item[i].src);
+                };
+                /*require.config({
+                    baseUrl: this.basePath,
+                });*/
+                
+		        require(sources,function(require){
+		            self.next(require);
+		        });
+	        } else {
+		        for (var i = 0, l = item.length; i < l; i++) {
+		            this.include(item[i], item);
+		        }
+	        }
         }
 	else
 	    this.state = 0;
@@ -2505,6 +2520,13 @@ apf.$loader = {
     }
 }
 
+if (!apf.hasRequireJS){
 apf.$loader.script(apf.basePath + (self.loader2 ? "loader2.js" : "loader.js"));
+} else {
+
+  define(["./loader-requirejs.js"],function(){});
+};
 //#endif
 //#endif
+
+
